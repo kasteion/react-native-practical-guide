@@ -1,31 +1,51 @@
 import { StyleSheet, Text, View, Image, ScrollView } from "react-native";
-import React, { useLayoutEffect } from "react";
+// To have acces to the context we need to import the useContext hook
+import React, { useLayoutEffect, useContext } from "react";
 import { MEALS } from "../data/dummy-data";
 import MealDetails from "../components/MealDetails";
 import Subtitle from "../components/MealDetail/Subtitle";
 import List from "../components/MealDetail/List";
 import IconButton from "../components/IconButton";
+// We need to import our context
+// import { FavoritesContext } from "../store/context/favorites-context";
+import { useSelector, useDispatch } from "react-redux";
+import { addFavorite, removeFavorite } from "../store/redux/favoriteSlice";
 
 const MealDetailScreen = ({ navigation, route }) => {
+  // We need to use the context hook passing the context we defined
+  //const favoriteMealsCtx = useContext(FavoritesContext);
+  const favoriteMealsCtx = useSelector((state) => state.favorites);
+  const dispatch = useDispatch();
+
   const mealId = route.params.mealId;
   const mealData = MEALS.find((meal) => meal.id === mealId);
 
-  function headerButtonPressHandler() {
-    console.log("Pressed!");
+  // We can query our context
+  const mealIsFavorite = favoriteMealsCtx.ids.includes(mealId);
+
+  function changeFavoriteStatusHandler() {
+    // console.log("Pressed!");
+    if (mealIsFavorite) {
+      // favoriteMealsCtx.removeFavorite(mealId);
+      dispatch(removeFavorite(mealId));
+    } else {
+      // favoriteMealsCtx.addFavorite(mealId);
+      dispatch(addFavorite(mealId));
+    }
   }
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => {
         return (
           <IconButton
-            onPress={headerButtonPressHandler}
-            icon="star"
+            onPress={changeFavoriteStatusHandler}
+            icon={mealIsFavorite ? "star" : "staro"}
             color="white"
           />
         );
       },
     });
-  }, [navigation, headerButtonPressHandler]);
+  }, [navigation, changeFavoriteStatusHandler]);
   return (
     <ScrollView>
       <View style={styles.root}>

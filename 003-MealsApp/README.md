@@ -221,3 +221,57 @@ const MealDetailScreen = ({ navigation, route }) => {
 > expo install react-native-gesture-handler react-native-reanimated
 
 > yarn add react-native-reanimated@2.2.0
+
+# Getting Started with React's Conext API
+
+1. Create a store directory
+
+2. Create a context subfolder and a redux subfolder
+
+3 Create a favorites-context.js
+
+- store
+  - context
+    - favorites-context.js
+  - redux
+
+The Initial context code:
+
+```js
+import { createContext } from "react";
+
+// Start with Upper case becase will be a Component
+export const FavoritesContext = createContext({
+  ids: [],
+  addFavorite: (id) => {},
+  removeFavorite: (id) => {},
+});
+
+function FavoritesContextProvider({ children }) {
+  return <FavoritesContext.Provider>{children}</FavoritesContext.Provider>;
+}
+
+export default FavoritesContextProvider;
+```
+
+4. Wrap the whole app in the context provider
+
+```js
+export default function App() {
+  return (
+    <>
+      <FavoritesContextProvider>
+        {
+          //...
+        }
+      </FavoritesContextProvider>
+    </>
+  );
+}
+```
+
+# Getting Started With Redux & Redux Toolkit
+
+https://redux-toolkit.js.org/tutorials/quick-start
+
+> yarn add @reduxjs/toolkit react-redux
