@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, TextInput } from "react-native";
-import React, { useState, useEffect } from "react";
+import { StyleSheet, View } from "react-native";
+import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   addExpense,
@@ -7,44 +7,29 @@ import {
   editExpense,
   increaseNext,
 } from "../store/redux/expenses";
-import Button from "../components/ui/Button";
-import IconButton from "../components/ui/IconButton";
 import Expense from "../models/Expense";
 import { GlobalStyles } from "../constants/styles";
+import ExpenseForm from "../components/ManageExpense/ExpenseForm";
 
 const ExpenseFormScreen = ({ navigation, route }) => {
   const expenseId = useSelector((state) => state.expenses.nextId);
-  const expenses = useSelector((state) => state.expenses.expenses);
-  const [id, setId] = useState();
-  const [description, setDescription] = useState();
-  const [date, setDate] = useState();
-  const [amount, setAmount] = useState();
   const dispatch = useDispatch();
 
   const isAddExpense = route.name === "AddExpense";
-
-  useEffect(() => {
-    if (!isAddExpense) {
-      const { expenseData } = route.params;
-      setId(expenseData.id);
-      setDescription(expenseData.description);
-      setDate(expenseData.date);
-      setAmount(expenseData.amount.toString());
-    }
-  }, [isAddExpense]);
+  const selectedExpense = route.params?.expenseData;
 
   function cancelHandler() {
     navigation.goBack();
   }
 
-  function addHandler() {
+  function addHandler(expenseData) {
     dispatch(
       addExpense(
         new Expense(
           expenseId,
-          description,
-          new Date(date + "T00:00:00"),
-          Number(amount)
+          expenseData.description,
+          expenseData.date,
+          expenseData.amount
         )
       )
     );
@@ -52,14 +37,14 @@ const ExpenseFormScreen = ({ navigation, route }) => {
     navigation.goBack();
   }
 
-  function updateHandler() {
+  function updateHandler(expenseData) {
     dispatch(
       editExpense(
         new Expense(
-          id,
-          description,
-          new Date(date + "T00:00:00"),
-          Number(amount)
+          selectedExpense.id,
+          expenseData.description,
+          expenseData.date,
+          expenseData.amount
         )
       )
     );
@@ -67,69 +52,19 @@ const ExpenseFormScreen = ({ navigation, route }) => {
   }
 
   function deleteHandler() {
-    dispatch(removeExpense(id));
+    dispatch(removeExpense(selectedExpense.id));
     navigation.goBack();
-  }
-
-  function RenderButtons() {
-    if (isAddExpense) {
-      return (
-        <>
-          <View style={styles.buttonContainer}>
-            <Button type="cancel" text="Cancel" onPress={cancelHandler} />
-            <Button type="go" text="Add" onPress={addHandler} />
-          </View>
-        </>
-      );
-    } else {
-      return (
-        <>
-          <View style={styles.buttonContainer}>
-            <Button type="cancel" text="Cancel" onPress={cancelHandler} />
-            <Button type="go" text="Update" onPress={updateHandler} />
-          </View>
-          <View style={styles.deleteButtonContainer}>
-            <IconButton
-              name="trash"
-              color={GlobalStyles.colors.error500}
-              size={32}
-              onPress={deleteHandler}
-            />
-          </View>
-        </>
-      );
-    }
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputName}>Description:</Text>
-        <TextInput
-          style={styles.input}
-          value={description}
-          onChangeText={(e) => setDescription(e)}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputName}>Date:</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numbers-and-punctuation"
-          value={date}
-          onChangeText={(e) => setDate(e)}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputName}>Amount:</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={amount}
-          onChangeText={(e) => setAmount(e)}
-        />
-      </View>
-      <RenderButtons />
+      <ExpenseForm
+        isAddExpense={isAddExpense}
+        onCancel={cancelHandler}
+        onSubmit={isAddExpense ? addHandler : updateHandler}
+        onDelete={deleteHandler}
+        defaultValues={selectedExpense}
+      />
     </View>
   );
 };
