@@ -1,18 +1,21 @@
 import { StyleSheet, View } from "react-native";
-import React from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
 import {
   addExpense,
   removeExpense,
   editExpense,
-  increaseNext,
 } from "../store/redux/expenses";
 import Expense from "../models/Expense";
 import { GlobalStyles } from "../constants/styles";
 import ExpenseForm from "../components/ManageExpense/ExpenseForm";
+import { deleteExpense, storeExpense, updateExpense } from "../util/http";
+import LoadingOverlay from "../components/ui/LoadingOverlay";
+import ErrorOverlay from "../components/ui/ErrorOverlay";
 
 const ExpenseFormScreen = ({ navigation, route }) => {
-  const expenseId = useSelector((state) => state.expenses.nextId);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState();
   const dispatch = useDispatch();
 
   const isAddExpense = route.name === "AddExpense";
@@ -22,38 +25,70 @@ const ExpenseFormScreen = ({ navigation, route }) => {
     navigation.goBack();
   }
 
-  function addHandler(expenseData) {
-    dispatch(
-      addExpense(
-        new Expense(
-          expenseId,
-          expenseData.description,
-          expenseData.date,
-          expenseData.amount
+  async function addHandler(expenseData) {
+    setIsSubmitting(true);
+    try {
+      const id = await storeExpense(expenseData);
+      dispatch(
+        addExpense(
+          new Expense(
+            id,
+            expenseData.description,
+            expenseData.date,
+            expenseData.amount
+          )
         )
-      )
-    );
-    dispatch(increaseNext());
-    navigation.goBack();
+      );
+      navigation.goBack();
+    } catch (error) {
+      setError("Could not save the data!");
+    }
+    setIsSubmitting(false);
   }
 
-  function updateHandler(expenseData) {
-    dispatch(
-      editExpense(
-        new Expense(
-          selectedExpense.id,
-          expenseData.description,
-          expenseData.date,
-          expenseData.amount
+  async function updateHandler(expenseData) {
+    setIsSubmitting(true);
+    try {
+      await updateExpense(selectedExpense.id, expenseData);
+      dispatch(
+        editExpense(
+          new Expense(
+            selectedExpense.id,
+            expenseData.description,
+            expenseData.date,
+            expenseData.amount
+          )
         )
-      )
-    );
-    navigation.goBack();
+      );
+      navigation.goBack();
+    } catch (error) {
+      setError("Could not update the data!");
+    }
+    setIsSubmitting(false);
   }
 
-  function deleteHandler() {
-    dispatch(removeExpense(selectedExpense.id));
-    navigation.goBack();
+  async function deleteHandler() {
+    setIsSubmitting(true);
+    try {
+      await deleteExpense(selectedExpense.id);
+      dispatch(removeExpense(selectedExpense.id));
+      navigation.goBack();
+    } catch (error) {
+      setError("Could not delete expense!");
+    }
+    setIsSubmitting(false);
+  }
+
+  function errorHandler() {
+    setError(null);
+  }
+
+  if (error && !isSubmitting) {
+    return <ErrorOverlay message={error} onConfirm={errorHandler} />;
+  }
+
+  if (isSubmitting) {
+    return <LoadingOverlay />;
   }
 
   return (
